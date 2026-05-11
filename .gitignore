@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Models and Data (Too large for Git)
+models/
+data/
+*.onnx
+augmented_model.onnx
+
+# Logs and Scratch
+*.log
+doc.txt
+scratch/
+test*.py
+
+# OS / IDE
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# User Uploads
+uploads/
+
+# Frontend (redundant but safe)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/*.log

@@ -1,0 +1,43 @@
+Mục đích:
+Tạo cặp dữ liệu (Parallel Dataset) bằng LLM
+Để mô hình T5 hiểu được thế nào là "hay", bạn cần cho nó thấy sự so sánh. Bạn nên tạo một script gọi API (Gemini/GPT) để rewrite (viết lại) các câu này.
+
+Chiến lược Prompt cho LLM:
+Đừng chỉ bảo nó "viết lại cho hay". Hãy yêu cầu nó nâng cấp dựa trên tiêu chí IELTS:
+
+Input: Low_Band_Sentence (Band 4-5)
+
+Output: High_Band_Sentence (Yêu cầu LLM viết lại ở mức Band 8-9, sử dụng từ vựng nâng cao và cấu trúc ngữ pháp phức tạp như câu ghép, mệnh đề quan hệ, đảo ngữ).
+
+
+Tổng quan về bộ dữ diệu:
+gồm file tại thư mục: ../data/raw/T5_dataset_clean.csv có các cột: Low_Band_Sentence, Current_Band
+
+[6.5 6.  3.5 4.5 5.  8.5 7.5 7.  4.  1.  8.  3.  5.5]
+Current_Band
+7.0    4447
+6.5    2823
+5.5    2589
+8.0    2510
+6.0    2468
+4.0    2407
+7.5    2155
+5.0    1937
+8.5    1885
+4.5    1578
+3.0    1535
+1.0    1063
+3.5     365
+
+M viết scripts yêu cầu LLM viết lại câu Low_Band_Sentence thành High_Band_Sentence dựa trên tiêu chí IELTS và lưu vào file ../data/raw/T5_dataset_rewrite.csv
+Lưu ý chọn lọc trong file csv để tạo file data khoảng 25k cặp câu chất lượng cao phân bổ như sau:
+Nhóm Band	Mục tiêu học của Model	Số lượng cặp câu (Ước tính)	Trọng số (%)
+Thấp (1.0 - 4.5)	Học cách sửa lỗi ngữ pháp nặng, chính tả, và cấu trúc câu gãy.	6,500	25%
+Trung bình (5.0 - 6.5)	Học cách nâng cấp từ vựng (Lexical), nối câu (Cohesion), và dùng từ chuyên ngành.	12,500	50%
+Cao (7.0 - 8.5)	Học cách trau chuốt sắc thái (Nuance), tính học thuật cao và sự tinh tế trong diễn đạt.	6,000	25%
+Tổng cộng		25,000	100%
+Lưu ý quan trọng khi tạo cặp câu
+Giữ nguyên ý nghĩa (Semantic Invariance): Dặn LLM không được thêm thắt thông tin mới hoặc thay đổi quan điểm của câu gốc. T5 chỉ nên học cách "thay áo" cho câu, không phải học cách "chém gió".
+Hệ số Band 8.5 -> 9.0: Dù số lượng mẫu 8.5 của bạn khá nhiều, nhưng việc nâng cấp từ 8.5 lên 9.0 đôi khi rất khó nhận ra sự khác biệt rõ rệt. Bạn có thể giảm bớt tỉ lệ này để nhường chỗ cho các câu 5.5 - 6.5 (vốn có nhiều "đất diễn" để cải thiện hơn).
+Độ dài tương đối: Đảm bảo câu Band 9 không dài gấp 3-4 lần câu Band 5. Nếu câu quá dài, khi người dùng áp dụng vào bài thi thực tế sẽ bị lố thời gian hoặc số lượng từ.
+key api lưu tại file .env, model là gemini-2.5-flash
