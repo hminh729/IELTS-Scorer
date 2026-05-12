@@ -96,6 +96,7 @@ IELTS-Scorer/
 ├── prompt.txt          # LLM system prompts
 ├── docker-compose.yml  # Containerization config
 └── requirements.txt    # Backend dependencies
+```
 
 ---
 
