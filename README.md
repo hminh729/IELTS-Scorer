@@ -16,6 +16,28 @@
 
 ---
 
+## 🖼️ Preview & UI
+
+<div align="center">
+  <img src="assets/dashboard.png" alt="Dashboard" width="800">
+  <p><i>Personalized Dashboard with learning progress and streaks.</i></p>
+</div>
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%"><img src="assets/trangdethi.png" alt="Exam Library"><br><i>Exam Library</i></td>
+      <td width="50%"><img src="assets/chitietdethi.png" alt="Exam Detail"><br><i>Exam Details & Discussion</i></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="assets/chedoluyentap.png" alt="Practice Mode"><br><i>AI-Powered Practice Mode</i></td>
+      <td width="50%"><img src="assets/chedophongthi.png" alt="Exam Mode"><br><i>Simulated Exam Environment</i></td>
+    </tr>
+  </table>
+</div>
+
+---
+
 ## 🧠 AI/ML Engineering & Training
 
 This project demonstrates a full ML lifecycle: Data collection -> Preprocessing -> Fine-tuning -> Quantization -> Deployment.
