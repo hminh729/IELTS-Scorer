@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API } from '../config';
 
 const ModelGenerationStatus = () => {
   const { user, isAuthenticated } = useAuth();
@@ -19,7 +20,7 @@ const ModelGenerationStatus = () => {
     const checkStatus = async () => {
       if (!isAuthenticated || !user?.username) return;
       try {
-        const res = await fetch(`http://localhost:8000/api/model-answer/status?user_id=${user.username}`);
+        const res = await fetch(`${API}/model-answer/status?user_id=${user.username}`);
         if (res.ok) {
           const data = await res.json();
           if (data.is_generating) {

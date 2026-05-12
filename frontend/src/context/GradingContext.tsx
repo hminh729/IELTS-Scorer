@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import type { ScoreResult } from '../types';
+import { API } from '../config';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = API;
 
 interface GradingJob {
   id: string; // session_id

@@ -1,12 +1,11 @@
 import numpy as np
-import cv2
 import torch
 import math
 import json
 import os
 from datetime import datetime, timezone
 from ml_models import (
-    reader, tokenizer, model, onnx_session, llm_model, t5_model, t5_tokenizer, 
+    tokenizer, model, onnx_session, llm_model, t5_model, t5_tokenizer, 
     sentence_model, sentence_tokenizer, DEVICE
 )
 from crud import get_user_history, db, find_vocab_matches
@@ -24,13 +23,8 @@ def ielts_rounding_standard(score: float) -> float:
         return float(int(score) + 1)
 
 def process_ocr(image_bytes: bytes) -> str:
-    """Trích xuất text từ ảnh sử dụng EasyOCR"""
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    if image is None: return ""
-    
-    results = reader.readtext(image)
-    return " ".join([res[1] for res in results])
+    """OCR feature is currently disabled in Docker environment."""
+    return "Tính năng OCR hiện đã bị tắt để tối ưu hóa tài nguyên hệ thống."
 
 async def get_user_stats(user_id: str, mode: str = "practice"):
     """Tính toán thống kê dashboard từ lịch sử người dùng"""

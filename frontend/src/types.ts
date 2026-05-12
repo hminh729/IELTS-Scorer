@@ -72,6 +72,9 @@ export interface ExamDetailResponse {
 
 export interface LeaderboardEntry {
   username: string;
+  full_name?: string;
+  avatar_url?: string;
+  is_online?: boolean;
   average_band: number;
   total_essays: number;
   streak: number;

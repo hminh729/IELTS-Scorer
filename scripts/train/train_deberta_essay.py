@@ -56,7 +56,6 @@ class DebertaV3ForIELTS(nn.Module):
 
         loss = None
         if labels is not None:
-            # Weighted Loss logic được xử lý bên trong custom Trainer bên dưới
             loss_fct = nn.MSELoss()
             loss = loss_fct(logits, labels.float())
 
@@ -84,24 +83,20 @@ class SaveModelCallback(TrainerCallback):
         self.best_loss = float('inf')
 
     def on_evaluate(self, args, state, control, metrics, **kwargs):
-        # Lấy loss từ tập đánh giá (metrics sẽ chứa eval_loss)
         current_loss = metrics.get("eval_loss")
         model = kwargs.get("model")
         trainer = kwargs.get("trainer")
 
         if current_loss is not None:
-            # 1. Luôn lưu Last Model (Lưu FULL trạng thái để resume)
             last_path = os.path.join(self.output_dir, "last_model")
             model.save_pretrained(last_path)
             self.tokenizer.save_pretrained(last_path)
             
-            # Lưu thêm optimizer, scheduler và trạng thái trainer để có thể resume
             trainer.save_optimizer_and_scheduler(last_path)
             trainer.state.save_to_json(os.path.join(last_path, "trainer_state.json"))
             
             print(f"\n[Callback] 🔄 Đã cập nhật Last Model (Full State). Loss: {current_loss:.4f}")
 
-            # 2. Kiểm tra nếu là Best Loss thì lưu Best Model
             if current_loss < self.best_loss:
                 self.best_loss = current_loss
                 best_path = os.path.join(self.output_dir, "best_model")
@@ -120,22 +115,13 @@ class WeightedTrainer(Trainer):
         logits = outputs.get("logits")
         
         if labels is not None and self.weights is not None:
-            # Tính MSE cho từng mẫu
             loss_fct = nn.MSELoss(reduction='none')
-            loss = loss_fct(logits, labels.float()) # [batch, num_labels]
-            
-            # Lấy Overall score (cột cuối) để làm căn cứ trọng số
+            loss = loss_fct(logits, labels.float())
             overall_scores = labels[:, -1] * 9.0
-            
-            # Áp dụng trọng số dựa trên score thực tế
-            # Chuyển score về index (ví dụ: 1.0 -> 2, 9.0 -> 18 nếu step là 0.5)
-            # Ở đây đơn giản nhất là map qua một dict trọng số
             sample_weights = torch.ones_like(overall_scores)
             for i, score in enumerate(overall_scores):
-                s = round(float(score) * 2) / 2 # Round về 0.5 gần nhất
+                s = round(float(score) * 2) / 2
                 sample_weights[i] = self.weights.get(s, 1.0)
-            
-            # Nhân trọng số vào loss
             loss = (loss.mean(dim=1) * sample_weights).mean()
         else:
             loss = outputs.loss
@@ -152,11 +138,14 @@ def compute_metrics(eval_pred):
     return {"rmse": rmse, "mae": mae}
 
 def get_args():
+    # base_dir is 3 levels up from scripts/train/
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="microsoft/deberta-v3-base")
-    parser.add_argument("--data_path", type=str, default="/content/drive/MyDrive/data/ASE/processed_ielts_dataset")
-    parser.add_argument("--output_dir", type=str, default="/content/drive/MyDrive/data/ASE/ASE_model")
-    parser.add_argument("--tensorboard_log", type=str, default="/content/drive/MyDrive/data/ASE/tensorboard")
+    parser.add_argument("--data_path", type=str, default=os.path.join(base_dir, "data/ASE/processed_ielts_dataset"))
+    parser.add_argument("--output_dir", type=str, default=os.path.join(base_dir, "models/ASE/ASE_model"))
+    parser.add_argument("--tensorboard_log", type=str, default=os.path.join(base_dir, "models/ASE/tensorboard"))
 
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=2e-5)
@@ -174,13 +163,11 @@ def train_model():
     args = get_args()
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Checkpoint thực tế bây giờ chính là thư mục last_model
     last_model_path = os.path.join(args.output_dir, "last_model")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     dataset = load_from_disk(args.data_path)
     
-    # Tính toán trọng số dựa trên tần suất tập Train
     overall_counts = pd.Series([round(float(x[-1]) * 9 * 2) / 2 for x in dataset['train']['labels']]).value_counts()
     max_count = overall_counts.max()
     weights_dict = {score: min(max_count / count, 10.0) for score, count in overall_counts.items()}
@@ -188,17 +175,15 @@ def train_model():
 
     model = DebertaV3ForIELTS(args.model_name, num_labels=5)
 
-    # Sửa lỗi: ValueError: Attempting to unscale FP16 gradients.
-    # Ép các tham số yêu cầu gradient về float32
     if torch.cuda.is_available():
         for param in model.parameters():
             if param.requires_grad:
                 param.data = param.data.to(torch.float32)
 
     training_args = TrainingArguments(
-        output_dir=args.output_dir, # Dùng thẳng folder output_dir
+        output_dir=args.output_dir,
         eval_strategy="epoch",
-        save_strategy="no", # Tắt tự động lưu checkpoint của Trainer
+        save_strategy="no",
         learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
@@ -207,7 +192,7 @@ def train_model():
         weight_decay=args.weight_decay,
         warmup_steps=args.warmup_steps,
         load_best_model_at_end=True,
-        metric_for_best_model="loss", # Theo yêu cầu là kiểm tra loss
+        metric_for_best_model="loss",
         greater_is_better=False,
         fp16=torch.cuda.is_available(),
         logging_dir=args.tensorboard_log,
@@ -220,28 +205,25 @@ def train_model():
         model=model,
         args=training_args,
         train_dataset=dataset["train"],
-        eval_dataset=dataset["test"], # Dùng tập TEST để đánh giá theo yêu cầu
+        eval_dataset=dataset["test"],
         compute_metrics=compute_metrics,
         weights=weights_dict, 
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=args.patience),
-            SaveModelCallback(args.output_dir, tokenizer) # Đăng ký callback lưu model
+            SaveModelCallback(args.output_dir, tokenizer)
         ]
     )
 
     print("🚀 Bắt đầu huấn luyện...")
     
-    # --- LOGIC RESUME TỰ ĐỘNG ---
     resume_from_checkpoint = None
     if os.path.exists(last_model_path) and os.listdir(last_model_path):
-        # Kiểm tra sự tồn tại của file optimizer.pt để chắc chắn đây là checkpoint hợp lệ
         if os.path.exists(os.path.join(last_model_path, "optimizer.pt")):
             resume_from_checkpoint = last_model_path
             print(f"--> Phát hiện Full State tại {last_model_path}. Đang nạp để train tiếp...")
     
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
-    # Ép đồng bộ bộ nhớ
     try:
         os.sync()
     except:

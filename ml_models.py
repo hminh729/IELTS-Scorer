@@ -1,14 +1,11 @@
-import easyocr
 import torch
 import torch.nn as nn
 import os
 import json
-import onnxruntime as ort
 from transformers import AutoTokenizer, DebertaV2Model, AutoModelForSeq2SeqLM
 from transformers.modeling_outputs import SequenceClassifierOutput
 import google.generativeai as genai
 from dotenv import load_dotenv
-from optimum.onnxruntime import ORTModelForSeq2SeqLM
 
 # Load environment variables
 load_dotenv()
@@ -67,9 +64,7 @@ def sanitize_tokenizer_config(model_path):
 sanitize_tokenizer_config(MODEL_PATH)
 sanitize_tokenizer_config(SENTENCE_MODEL_PATH)
 
-# Initialize EasyOCR
-print(f"🔄 Đang nạp EasyOCR...")
-reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
+# (EasyOCR disabled)
 
 # Initialize Main Scorer Model
 print(f"🔄 Đang nạp mô hình Scorer từ: {MODEL_PATH}")

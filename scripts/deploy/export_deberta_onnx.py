@@ -56,7 +56,8 @@ class DebertaV3ForIELTS(nn.Module):
         torch.save(self.state_dict(), os.path.join(save_directory, "pytorch_model.bin"))
 
 # Load Model
-model_path = r"./models/DeBert/best_model"
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+model_path = os.path.join(base_dir, "models/DeBert/best_model")
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = DebertaV3ForIELTS(model_path)
 state_dict = torch.load(os.path.join(model_path, "pytorch_model.bin"), map_location="cpu")
@@ -71,7 +72,6 @@ class ONNXWrapper(torch.nn.Module):
 
     def forward(self, input_ids, attention_mask, token_type_ids):
         # Gọi trực tiếp các thành phần để tránh tạo ra SequenceClassifierOutput
-        # Việc này giúp đồ thị ONNX "sạch" hơn, không bị lỗi khi Quantize
         
         # 1. Chạy qua backbone DeBERTa
         outputs = self.model.deberta(
@@ -90,9 +90,6 @@ class ONNXWrapper(torch.nn.Module):
         # 4. Classifier
         logits = self.model.classifier(pooled_output)
         
-        # CHÚ Ý: Không dùng Sigmoid ở đây để giữ độ chính xác cao nhất khi Quantize.
-        # Chúng ta sẽ tính Sigmoid bằng code Python/Numpy khi Inference.
-        
         return logits
 
 onnx_model = ONNXWrapper(model)
@@ -103,7 +100,7 @@ text = "This is a sample IELTS essay for ONNX export."
 inputs = tokenizer(text, return_tensors="pt", padding="max_length", truncation=True, max_length=512)
 
 # Cấu hình đường dẫn xuất
-output_dir = r"./models/DeBert/best_model_onnx"
+output_dir = os.path.join(base_dir, "models/DeBert/best_model_onnx")
 os.makedirs(output_dir, exist_ok=True)
 output_path = os.path.join(output_dir, "ASE_model.onnx")
 
@@ -122,7 +119,7 @@ torch.onnx.export(
         "token_type_ids": {0: "batch_size", 1: "seq_len"},
         "logits": {0: "batch_size"}
     },
-    opset_version=17, # Thử với 17 trước cho ổn định
+    opset_version=17,
 )
 
 print("✅ Export thành công!")

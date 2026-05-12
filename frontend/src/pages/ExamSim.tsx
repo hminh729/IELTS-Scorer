@@ -21,10 +21,11 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useGrading } from '../context/GradingContext';
 import axios from 'axios';
+import { API } from '../config';
 import type { ScoreResult } from '../types';
 import ResultCard from '../Component/ResultCard';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = API;
 
 interface ExamSimProps {
   setGlobalHeaderHide: (hide: boolean) => void;

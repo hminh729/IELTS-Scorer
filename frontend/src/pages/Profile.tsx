@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Camera, User, Mail, Target, FileText, Flame, Save, Loader2, Edit3, Trash2 } from 'lucide-react';
+import { API } from '../config';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -30,7 +31,7 @@ const Profile = () => {
     setIsSaving(true);
     setMessage({ type: '', text: '' });
     try {
-      const res = await fetch(`http://localhost:8000/api/user/profile?user_id=${user.username}`, {
+      const res = await fetch(`${API}/user/profile?user_id=${user.username}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -64,7 +65,7 @@ const Profile = () => {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/user/avatar?user_id=${user.username}`, {
+      const res = await fetch(`${API}/user/avatar?user_id=${user.username}`, {
         method: 'POST',
         body: formData,
       });
@@ -101,7 +102,7 @@ const Profile = () => {
     setIsChangingPassword(true);
     setMessage({ type: '', text: '' });
     try {
-      const res = await fetch(`http://localhost:8000/api/user/change-password`, {
+      const res = await fetch(`${API}/user/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

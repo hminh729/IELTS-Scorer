@@ -3,7 +3,8 @@ import subprocess
 import sys
 
 # Đảm bảo đường dẫn tuyệt đối
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR is now 3 levels up from scripts/deploy/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL_SRC = os.path.join(BASE_DIR, "models", "T5", "ASE_model_T5_Final")
 ONNX_OUT = os.path.join(BASE_DIR, "models", "T5", "ASE_model_T5_ONNX")
 
@@ -28,20 +29,16 @@ def export_t5_to_onnx():
         print(f"❌ Lỗi: Không tìm thấy thư mục mô hình nguồn tại {MODEL_SRC}")
         return
 
-    # Sửa lỗi tokenizer config nếu cần (tránh AttributeError: 'list' object has no attribute 'keys')
+    # Sửa lỗi tokenizer config nếu cần
     tokenizer_config_path = os.path.join(MODEL_SRC, "tokenizer_config.json")
     if os.path.exists(tokenizer_config_path):
         with open(tokenizer_config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
         
-        # Nếu extra_special_tokens là list, nó có thể gây lỗi ở một số phiên bản transformers
         if "extra_special_tokens" in config and isinstance(config["extra_special_tokens"], list):
             print("🔧 Đang hiệu chỉnh tokenizer_config.json để tương thích...")
-            # Backup
             with open(tokenizer_config_path + ".bak", "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
-            # Xóa hoặc chuyển đổi (tùy thuộc vào việc nó có thực sự cần thiết không)
-            # Ở đây ta tạm thời xóa để export model trước, tokenizer sẽ được xử lý riêng
             del config["extra_special_tokens"]
             with open(tokenizer_config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
@@ -60,7 +57,5 @@ def export_t5_to_onnx():
     print(f"✅ Chuyển đổi thành công! Các file ONNX nằm trong: {ONNX_OUT}")
 
 if __name__ == "__main__":
-    # Cài đặt dependency nếu cần
     install_optimum()
-    # Thực hiện export
     export_t5_to_onnx()

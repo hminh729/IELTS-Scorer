@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ExamDetailResponse } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useGrading } from '../context/GradingContext';
+import { API } from '../config';
 import { History, Eye, Clock, Calendar, CheckCircle2, ChevronRight } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -242,7 +243,7 @@ const DiscussionTab = React.forwardRef<{ scrollIntoView: (options?: ScrollIntoVi
 
   const fetchComments = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/exam/${examId}/comments`);
+      const res = await fetch(`${API}/exam/${examId}/comments`);
       if (res.ok) setComments(await res.json());
     } catch (e) {
       console.error(e);
@@ -255,7 +256,7 @@ const DiscussionTab = React.forwardRef<{ scrollIntoView: (options?: ScrollIntoVi
 
   const handlePost = async (content: string) => {
     if (!isAuthenticated) { alert('Bạn cần đăng nhập để bình luận!'); return; }
-    const res = await fetch(`http://localhost:8000/api/exam/${examId}/comments`, {
+    const res = await fetch(`${API}/exam/${examId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exam_id: examId, user_id: user.username, username: user.username, content, parent_id: null }),
@@ -268,7 +269,7 @@ const DiscussionTab = React.forwardRef<{ scrollIntoView: (options?: ScrollIntoVi
 
   const handleReply = async (parentId: string, content: string) => {
     if (!isAuthenticated) { alert('Bạn cần đăng nhập để trả lời!'); return; }
-    const res = await fetch(`http://localhost:8000/api/exam/${examId}/comments`, {
+    const res = await fetch(`${API}/exam/${examId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ exam_id: examId, user_id: user.username, username: user.username, content, parent_id: parentId }),
@@ -290,7 +291,7 @@ const DiscussionTab = React.forwardRef<{ scrollIntoView: (options?: ScrollIntoVi
 
   const handleReact = async (comment_id: string, reaction_type: string) => {
     if (!isAuthenticated) { alert('Bạn cần đăng nhập để thả cảm xúc!'); return; }
-    const res = await fetch(`http://localhost:8000/api/comments/${comment_id}/react?user_id=${user.username}&reaction_type=${reaction_type}`, { method: 'POST' });
+    const res = await fetch(`${API}/comments/${comment_id}/react?user_id=${user.username}&reaction_type=${reaction_type}`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
       setComments(prev => {
@@ -308,7 +309,7 @@ const DiscussionTab = React.forwardRef<{ scrollIntoView: (options?: ScrollIntoVi
 
   const handleDelete = async (commentId: string) => {
     if (!isAuthenticated || !window.confirm('Bạn có chắc muốn xóa bình luận này?')) return;
-    const res = await fetch(`http://localhost:8000/api/comments/${commentId}?user_id=${user.username}`, { method: 'DELETE' });
+    const res = await fetch(`${API}/comments/${commentId}?user_id=${user.username}`, { method: 'DELETE' });
     if (res.ok) {
       setComments(prev => prev
         .filter(c => c.id !== commentId)
@@ -408,7 +409,7 @@ const AttemptHistory: React.FC<{ examId: string }> = ({ examId }) => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:8000/api/user/history?user_id=${user.username}&exam_id=${examId}&mode=all`);
+      const res = await fetch(`${API}/user/history?user_id=${user.username}&exam_id=${examId}&mode=all`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data);
@@ -565,7 +566,7 @@ export default function ExamDetail() {
 
   const fetchExamDetail = async (examId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/exam/detail/${examId}`);
+      const res = await fetch(`${API}/exam/detail/${examId}`);
       if (res.ok) {
         const data = await res.json();
         setExam(data);
@@ -784,7 +785,7 @@ const ModelAnswerTab: React.FC<{ id: string, exam: any, task1?: any, task2?: any
     
     try {
       // 1. Check if this question is being generated (globally or for this user)
-      const statusUrl = `http://localhost:8000/api/model-answer/status?question=${encodeURIComponent(question)}&target_band=${selectedBand}${user?.username ? `&user_id=${user.username}` : ''}`;
+      const statusUrl = `${API}/model-answer/status?question=${encodeURIComponent(question)}&target_band=${selectedBand}${user?.username ? `&user_id=${user.username}` : ''}`;
       const statusRes = await fetch(statusUrl);
       if (statusRes.ok) {
         const statusData = await statusRes.json();
@@ -796,7 +797,7 @@ const ModelAnswerTab: React.FC<{ id: string, exam: any, task1?: any, task2?: any
       }
 
       // 2. Fetch answer (non-forcing)
-      const res = await fetch(`http://localhost:8000/api/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}`);
+      const res = await fetch(`${API}/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.essay) {
@@ -822,7 +823,7 @@ const ModelAnswerTab: React.FC<{ id: string, exam: any, task1?: any, task2?: any
         const question = selectedTask === "1" ? task1?.prompt : task2?.prompt;
         if (!question) return;
 
-        const statusUrl = `http://localhost:8000/api/model-answer/status?question=${encodeURIComponent(question)}&target_band=${selectedBand}${user?.username ? `&user_id=${user.username}` : ''}`;
+        const statusUrl = `${API}/model-answer/status?question=${encodeURIComponent(question)}&target_band=${selectedBand}${user?.username ? `&user_id=${user.username}` : ''}`;
         
         try {
           const statusRes = await fetch(statusUrl);
@@ -845,7 +846,7 @@ const ModelAnswerTab: React.FC<{ id: string, exam: any, task1?: any, task2?: any
     const question = selectedTask === "1" ? task1?.prompt : task2?.prompt;
     if (!question) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}`);
+      const res = await fetch(`${API}/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.essay) {
@@ -872,7 +873,7 @@ const ModelAnswerTab: React.FC<{ id: string, exam: any, task1?: any, task2?: any
     try {
       const examTitle = exam?.title || "Bài mẫu";
       const userId = user?.username || "";
-      const res = await fetch(`http://localhost:8000/api/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}&user_id=${userId}&force_generate=true&exam_title=${encodeURIComponent(examTitle)}&exam_id=${id}`);
+      const res = await fetch(`${API}/model-answer?question=${encodeURIComponent(question)}&target_band=${selectedBand}&task_type=${selectedTask}&user_id=${userId}&force_generate=true&exam_title=${encodeURIComponent(examTitle)}&exam_id=${id}`);
       if (res.ok) {
         const data = await res.json();
         if (data.status === "started") {
@@ -1088,7 +1089,7 @@ const OutlineTab: React.FC<{ id: string, task1?: any, task2?: any }> = ({ id, ta
     setError(null);
     try {
       const examTitle = `Dàn bài: ${question}`.substring(0, 50) + "...";
-      const url = `http://localhost:8000/api/exam/outline?question=${encodeURIComponent(question)}&task_type=${currentTask}` + 
+      const url = `${API}/exam/outline?question=${encodeURIComponent(question)}&task_type=${currentTask}` + 
                  (force ? `&force_generate=true&user_id=${user?.username}&exam_id=${id}&exam_title=${encodeURIComponent(examTitle)}` : "");
       
       const res = await fetch(url);

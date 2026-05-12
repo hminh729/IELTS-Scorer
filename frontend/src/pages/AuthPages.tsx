@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, UserPlus, Mail, Lock, User } from 'lucide-react';
 import axios from 'axios';
+import { API } from '../config';
 
 import { GoogleLogin } from '@react-oauth/google';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = API;
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');

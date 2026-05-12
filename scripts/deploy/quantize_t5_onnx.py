@@ -3,7 +3,8 @@ from optimum.onnxruntime import ORTQuantizer
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
 
 # Đảm bảo đường dẫn tuyệt đối
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR is now 3 levels up from scripts/deploy/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ONNX_SRC = os.path.join(BASE_DIR, "models", "T5", "ASE_model_T5_ONNX")
 QUANT_OUT = os.path.join(BASE_DIR, "models", "T5", "ASE_model_T5_Quantized")
 
@@ -34,10 +35,8 @@ def quantize_t5():
             continue
             
         print(f"--- Đang Quantize {file_name} ---")
-        # Khởi tạo quantizer cho từng file
         quantizer = ORTQuantizer.from_pretrained(ONNX_SRC, file_name=file_name)
         
-        # Thực hiện quantization cho file hiện tại
         quantizer.quantize(
             save_dir=QUANT_OUT,
             quantization_config=qconfig,

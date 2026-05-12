@@ -28,10 +28,11 @@ import {
   Area
 } from 'recharts';
 import axios from 'axios';
+import { API } from '../config';
 import ResultCard from '../Component/ResultCard';
 import type { ScoreResult } from '../types';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = API;
 
 const Dashboard = () => {
   const { user } = useAuth();

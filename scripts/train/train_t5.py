@@ -15,29 +15,16 @@ import numpy as np
 import nltk
 
 # =================================================================
-# 0. CẤU HÌNH ĐƯỜNG DẪN (TỐI ƯU: DATA LOCAL - MODEL DRIVE)
+# 0. CẤU HÌNH ĐƯỜNG DẪN
 # =================================================================
-# 1. Dữ liệu: Load từ Local để đạt tốc độ cao nhất
-DRIVE_DATA_PATH = "/content/drive/MyDrive/data/ASE/T5_Data_Processed"
-LOCAL_DATA_PATH = "/content/T5_Data_Processed"
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 2. Đầu ra: Lưu trực tiếp vào Drive để an toàn, không lo mất session
-OUTPUT_DRIVE_DIR = "/content/drive/MyDrive/data/ASE/ASE_model_T5_Checkpoints"
-FINAL_DRIVE_DIR = "/content/drive/MyDrive/data/ASE/ASE_model_T5_Final"
+LOCAL_DATA_PATH = os.path.join(base_dir, "data/T5_Data_Processed")
+OUTPUT_DIR = os.path.join(base_dir, "models/ASE/ASE_model_T5_Checkpoints")
+FINAL_DIR = os.path.join(base_dir, "models/ASE/ASE_model_T5_Final")
 
-# Đảm bảo thư mục đầu ra tồn tại trên Drive
-os.makedirs(OUTPUT_DRIVE_DIR, exist_ok=True)
-
-# Tự động copy data từ Drive vào máy ảo nếu chưa có (Giải quyết nghẽn I/O đọc)
-if not os.path.exists(LOCAL_DATA_PATH) and os.path.exists(DRIVE_DATA_PATH):
-    print("🚚 Đang copy dữ liệu vào local máy ảo để tăng tốc đọc...")
-    shutil.copytree(DRIVE_DATA_PATH, LOCAL_DATA_PATH)
-    print("✅ Copy hoàn tất! Tốc độ đọc dữ liệu bây giờ sẽ cực nhanh.")
-elif not os.path.exists(DRIVE_DATA_PATH) and not os.path.exists(LOCAL_DATA_PATH):
-    # Fallback cho chạy local
-    LOCAL_DATA_PATH = "../data/T5_Data_Processed"
-    OUTPUT_DRIVE_DIR = "./t5-checkpoints"
-    FINAL_DRIVE_DIR = "./t5-final"
+# Đảm bảo thư mục đầu ra tồn tại
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # =================================================================
 # 1. KHỞI TẠO TOKENIZER & MODEL
@@ -77,22 +64,22 @@ def compute_metrics(eval_preds):
     return {k: round(v, 4) for k, v in result.items()}
 
 # =================================================================
-# 2. THIẾT LẬP TRAINING (LƯU TRỰC TIẾP VÀO DRIVE)
+# 2. THIẾT LẬP TRAINING
 # =================================================================
 dataset = load_from_disk(LOCAL_DATA_PATH)
 
-# Kiểm tra resume training từ checkpoint trên Drive
+# Kiểm tra resume training từ checkpoint
 resume_from_checkpoint = False
-if os.path.exists(OUTPUT_DRIVE_DIR) and any(d.startswith("checkpoint") for d in os.listdir(OUTPUT_DRIVE_DIR)):
-    print(f"--- Tìm thấy checkpoint trên Drive. Sẽ resume training... ---")
+if os.path.exists(OUTPUT_DIR) and any(d.startswith("checkpoint") for d in os.listdir(OUTPUT_DIR)):
+    print(f"--- Tìm thấy checkpoint. Sẽ resume training... ---")
     resume_from_checkpoint = True
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir=OUTPUT_DRIVE_DIR,     # LƯU TRỰC TIẾP VÀO DRIVE
+    output_dir=OUTPUT_DIR,
     eval_strategy="epoch", 
     save_strategy="epoch",
     learning_rate=5e-5,
-    per_device_train_batch_size=32,   # Tối ưu cho T4 GPU
+    per_device_train_batch_size=32,
     per_device_eval_batch_size=16,
     gradient_accumulation_steps=2,
     weight_decay=0.05,
@@ -105,7 +92,7 @@ training_args = Seq2SeqTrainingArguments(
     optim="adamw_torch_fused",
     dataloader_num_workers=2,
     dataloader_pin_memory=True,
-    save_total_limit=2,               # Giữ tối đa 2 checkpoint trên Drive để tiết kiệm dung lượng
+    save_total_limit=2,
     load_best_model_at_end=True,
     metric_for_best_model="eval_rougeL",
     logging_steps=50,
@@ -124,7 +111,7 @@ trainer = Seq2SeqTrainer(
 )
 
 # 3. TRAINING
-print(f"🚀 Bắt đầu training (Data: Local / Model: Drive)...")
+print(f"🚀 Bắt đầu training...")
 trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
 # 4. ĐÁNH GIÁ & LƯU BẢN CUỐI CÙNG
@@ -132,8 +119,8 @@ print("\n🔍 Đang đánh giá cuối cùng trên tập Test...")
 test_results = trainer.evaluate(eval_dataset=dataset["test"], metric_key_prefix="test")
 print(f"Kết quả Test: {test_results}")
 
-# Lưu bản Model tốt nhất vào thư mục Final trên Drive
-trainer.save_model(FINAL_DRIVE_DIR)
-tokenizer.save_pretrained(FINAL_DRIVE_DIR)
+# Lưu bản Model tốt nhất vào thư mục Final
+trainer.save_model(FINAL_DIR)
+tokenizer.save_pretrained(FINAL_DIR)
 
-print(f"\n✅ Training Hoàn Tất! Model đã được lưu vĩnh viễn trên Drive tại: {FINAL_DRIVE_DIR}")
+print(f"\n✅ Training Hoàn Tất! Model đã được lưu tại: {FINAL_DIR}")

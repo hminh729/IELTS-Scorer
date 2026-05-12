@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API } from '../config';
 
 interface AuthContextType {
   user: any;
@@ -22,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfile = async () => {
       if (token && user?.username) {
         try {
-          const res = await fetch(`http://localhost:8000/api/user/profile?user_id=${user.username}`);
+          const res = await fetch(`${API}/user/profile?user_id=${user.username}`);
           if (res.ok) {
             const profile = await res.json();
             updateUser(profile);

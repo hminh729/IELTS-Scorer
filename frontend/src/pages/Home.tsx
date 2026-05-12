@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGrading } from '../context/GradingContext';
 import { useNavigate } from 'react-router-dom';
 import type { ScoreResult } from '../types';
+import { API } from '../config';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Home: React.FC = () => {
 
       const fetchExamDetail = async () => {
         try {
-          const res = await fetch(`http://localhost:8000/api/exam/detail/${passedExamId}`);
+          const res = await fetch(`${API}/exam/detail/${passedExamId}`);
           if (res.ok) {
             const data = await res.json();
             setExamData(data);

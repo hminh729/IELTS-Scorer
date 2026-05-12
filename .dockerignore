@@ -1,0 +1,27 @@
+# ===== Git-tracked but not needed in Docker =====
+.git
+.gitignore
+.idea
+.vscode
+__pycache__
+*.py[cod]
+venv/
+
+# ===== Temp & scratch =====
+*.log
+doc.txt
+scratch/
+test*.py
+.env
+.env.example
+
+# ===== Frontend dev artifacts (built in Docker) =====
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# ===== Other =====
+README.md
+uploads/
+*.onnx
+augmented_model.onnx

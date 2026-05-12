@@ -31,7 +31,7 @@ function App() {
           IELTS Scorer
         </Link>
         <div className="flex items-center gap-6">
-          {/* <Link to="/" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Luyện tập</Link> */}
+          <Link to="/" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Luyện tập</Link>
           <Link to="/library" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors flex items-center gap-2">
             <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
             Đề thi online

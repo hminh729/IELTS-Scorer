@@ -4,6 +4,10 @@ __pycache__/
 *$py.class
 venv/
 .env
+.python-version
+pyproject.toml
+uv.lock
+
 
 # Models and Data (Too large for Git)
 models/

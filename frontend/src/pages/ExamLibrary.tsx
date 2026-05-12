@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { ExamLibraryItem } from '../types';
+import { API_BASE_URL } from '../config';
 
 export default function ExamLibrary() {
   const { user, isAuthenticated } = useAuth();
@@ -37,7 +38,7 @@ export default function ExamLibrary() {
   const fetchExams = async () => {
     setLoading(true);
     try {
-      const url = new URL("http://localhost:8000/api/exam/library");
+      const url = new URL(`${API_BASE_URL}/api/exam/library`, window.location.origin);
       if (debouncedSearch) {
         url.searchParams.append("search", debouncedSearch);
       }

@@ -59,9 +59,9 @@ This project demonstrates a full ML lifecycle: Data collection -> Preprocessing 
 IELTS-Scorer/
 ├── frontend/           # React.js + TypeScript (Vite)
 ├── scripts/            # AI/ML Pipeline: Crawling, Training, & Quantization
-│   ├── ASE_Training_DeBert.py      # Fine-tuning Scorer
-│   ├── ASE_Training_T5.py          # Fine-tuning Rephrasing Engine
-│   └── ASE_Model_Onnx_Quantize.py  # 8-bit Quantization
+│   ├── data/           # Data crawling, preprocessing & importing
+│   ├── train/          # Model fine-tuning (DeBERTa, T5)
+│   └── deploy/         # Exporting to ONNX & Quantization
 ├── assets/             # Project visual assets (Banners, diagrams)
 ├── main.py             # FastAPI entry point
 ├── controller.py       # API Route controllers
@@ -74,27 +74,67 @@ IELTS-Scorer/
 ├── prompt.txt          # LLM system prompts
 ├── docker-compose.yml  # Containerization config
 └── requirements.txt    # Backend dependencies
+
+---
+
+## 📊 Datasets & Models
+
+Due to the large size of the fine-tuned models and processed datasets, they are hosted on Google Drive:
+
+- **Download Models**: [Google Drive - Models](https://drive.google.com/drive/folders/13UZ0KnyDtuA25MIaOiuMX9LTcgAr0pTC?usp=sharing)
+- **Download Data**: [Google Drive - Data](https://drive.google.com/drive/folders/1KaEYBcfVGW64CcC8xcRJrUD2sfW4M-pX?usp=sharing)
+
+### 1. Data Files (`data/raw/`)
+- **`ielts_writing_dataset3.csv`**: Main training set (Task 1 & 2) with detailed 4-criteria scores and justifications.
+- **`zim_ielts_writing_all.csv`**: Real-world IELTS essays collected from Zim.vn.
+- **`T5_dataset_final_balanced.csv`**: Curated sentence-level dataset for rephrasing training.
+- **`augmented_band_3_5.csv`**: Synthetic data used to improve accuracy for low-band essay scoring.
+
+### 2. Model Structure (`models/`)
+- **`DeBert/best_model/`**: Fine-tuned **DeBERTa-v3-Small** for multi-criteria automated essay scoring.
+- **`DeBert/DeBERTa_Sentence_Scorer/`**: Fine-tuned model used to evaluate the band score of individual sentences.
+- **`T5/ASE_model_T5_Final/`**: Fine-tuned **T5-Base** for conditional sentence rephrasing (grammar, vocabulary, style).
+
+---
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Setup Environment
-```bash
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate
-pip install -r requirements.txt
-```
+### 1. Prerequisites
+- [Docker](https://www.docker.com/products/docker-desktop/) & Docker Compose installed.
+- (Optional) Python 3.10+ if running locally without Docker.
 
 ### 2. Configuration
-Create a `.env` file with:
-- `MONGO_URI`: Your MongoDB connection string.
-- `GEMINI_API_KEY`: Your Google AI Studio key.
+Create a `.env` file in the root directory:
+```env
+MONGO_URI=mongodb://admin:password123@mongodb:27017
+GEMINI_API_KEY=your_gemini_api_key_here
+GG_Client_Id=your_google_client_id
+JWT_SECRET=your_random_secret_string
+```
 
-### 3. Run
+### 3. Run with Docker (Recommended)
+This will spin up the FastAPI backend, MongoDB, and the React frontend automatically.
 ```bash
+docker compose up --build -d
+```
+The app will be available at `http://localhost:8000`.
+
+### 4. Local Development (Manual)
+If you prefer to run the components separately:
+```bash
+# Backend
+python -m venv venv
+source ./venv/bin/activate  # Windows: ./venv/Scripts/activate
+pip install -r requirements.txt
 uvicorn main:app --reload
+
+# Frontend
+cd frontend
+npm install
+npm run dev
 ```
 
 ---

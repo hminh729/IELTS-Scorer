@@ -8,14 +8,15 @@ from datasets import load_from_disk
 import torch
 
 # 1. Cấu hình đường dẫn
-source_dir = r"./models/DeBert/best_model_onnx"
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+source_dir = os.path.join(base_dir, "models/DeBert/best_model_onnx")
 source_model_path = os.path.join(source_dir, "ASE_model.onnx")
-output_dir = r"./models/DeBert/best_model_onnx_quantize"
+output_dir = os.path.join(base_dir, "models/DeBert/best_model_onnx_quantize")
 output_model_path = os.path.join(output_dir, "ASE_model_quantized.onnx")
 
 # Đường dẫn data để Calibration (Định chuẩn)
-data_path = r"./data/Debert_Data_Processed"
-model_path_base = r"./models/DeBert/best_model"
+data_path = os.path.join(base_dir, "data/Deberta_Sentence_Processed")
+model_path_base = os.path.join(base_dir, "models/DeBert/best_model")
 
 if not os.path.exists(source_model_path):
     print(f"❌ Lỗi: Không tìm thấy mô hình tại {source_model_path}")
@@ -31,10 +32,9 @@ try:
     # Lấy ngẫu nhiên 200 mẫu để định chuẩn dải giá trị
     calibration_samples = dataset.shuffle(seed=42).select(range(min(200, len(dataset))))
 
-    # Dữ liệu đã được Tokenize sẵn trong dataset, chỉ cần giữ lại các cột cần thiết
+    # Dữ liệu đã được Tokenize sẵn trong dataset
     calibration_dataset = calibration_samples.remove_columns([c for c in calibration_samples.column_names if c not in ["input_ids", "attention_mask", "token_type_ids"]])
     
-    # Chuyển đổi sang định dạng PyTorch tensors để ORTQuantizer xử lý
     calibration_dataset.set_format("torch")
     
     print(f"✅ Đã chuẩn bị {len(calibration_dataset)} mẫu dữ liệu định chuẩn (đã tokenize sẵn).")
@@ -45,7 +45,6 @@ except Exception as e:
 # 3. Thực hiện Static Quantization (INT8) sử dụng Optimum
 print(f"🚀 Bước 2: Đang tiến hành Static Quantization mô hình...")
 try:
-    # Khởi tạo Quantizer từ file ONNX gốc
     quantizer = ORTQuantizer.from_pretrained(source_dir, file_name="ASE_model.onnx")
 
     # Cấu hình nén tĩnh
@@ -59,7 +58,6 @@ try:
         method=CalibrationMethod.MinMax
     )
 
-    # BƯỚC A: Fit (Calibration) - Tính toán dải giá trị
     print("   - Đang chạy Calibration...")
     ranges = quantizer.fit(
         dataset=calibration_dataset,
@@ -67,7 +65,6 @@ try:
         batch_size=1
     )
 
-    # BƯỚC B: Quantize - Nén mô hình dựa trên dải giá trị đã tính
     print("   - Đang nạp dải giá trị và nén...")
     quantizer.quantize(
         quantization_config=qconfig,
@@ -76,7 +73,7 @@ try:
         file_suffix="quantized"
     )
     
-    # Đổi tên cho khớp với controller
+    # Đổi tên cho khớp
     default_output = os.path.join(output_dir, "model_quantized.onnx")
     if os.path.exists(default_output):
         if os.path.exists(output_model_path): os.remove(output_model_path)
@@ -111,7 +108,6 @@ try:
     print(f"\nSai số lớn nhất (Max diff): {np.max(diff):.6f}")
     print(f"Sai số trung bình (Mean diff): {np.mean(diff):.6f}")
     
-    # Thử tính điểm sau Sigmoid để xem sai lệch thực tế
     def sigmoid(x): return 1 / (1 + np.exp(-x))
     score_fp32 = sigmoid(outputs_fp32[0][0]) * 9.0
     score_quant = sigmoid(outputs_quant[0][0]) * 9.0

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Flame, TrendingUp, History, User, Award } from 'lucide-react';
 import type { LeaderboardEntry } from '../types';
+import { API } from '../config';
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -14,7 +15,7 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/leaderboard?sort_by=${sortBy}`);
+      const res = await fetch(`${API}/leaderboard?sort_by=${sortBy}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data);

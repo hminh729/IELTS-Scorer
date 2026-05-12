@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API } from '../config';
 
 interface OCRUploadProps {
   onExtractedText: (text: string) => void;
@@ -25,7 +26,7 @@ const OCRUpload: React.FC<OCRUploadProps> = ({ onExtractedText, showLoader }) =>
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:8000/api/extract-text', {
+      const response = await fetch(`${API}/extract-text`, {
         method: 'POST',
         body: formData,
       });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { API } from '../config';
 
 interface EditorAreaProps {
   question: string;
@@ -191,7 +192,7 @@ const EditorArea: React.FC<EditorAreaProps> = ({
     setIsApplied(false);
 
     try {
-      const response = await fetch('http://localhost:8000/api/rephrase', {
+      const response = await fetch(`${API}/rephrase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: selectedText }),
